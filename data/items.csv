@@ -1,0 +1,8 @@
+id,name,effect,value,price_min,price_max,desc
+heal_s,回復薬(小),heal,30,40,80,HP +30
+heal_m,回復薬(中),heal,70,100,160,HP +70
+heal_l,回復薬(大),heal,150,200,350,HP +150
+mp_pot,MPポーション,mp,30,60,120,MP +30
+smoke,スモークボム,escape,0,80,150,戦闘から逃走
+boost,強化剤,temp_atk,10,120,220,次戦ATK +10
+tape,防護テープ,temp_def,10,100,180,次戦DEF +10

@@ -1,0 +1,63 @@
+<?php
+// ============================================================
+//  session.php — セッション管理・プレイヤー状態
+// ============================================================
+
+require_once __DIR__ . '/config.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+function player_get(): ?array {
+    return $_SESSION[SESSION_KEY] ?? null;
+}
+
+function player_set(array $p): void {
+    $_SESSION[SESSION_KEY] = $p;
+}
+
+function player_clear(): void {
+    unset($_SESSION[SESSION_KEY]);
+}
+
+function player_new(array $stats): array {
+    return [
+        'hp'       => $stats['hp'],
+        'max_hp'   => $stats['hp'],
+        'mp'       => $stats['mp'],
+        'max_mp'   => $stats['mp'],
+        'atk'      => $stats['atk'],
+        'def'      => $stats['def'],
+        'agi'      => $stats['agi'],
+        'luk'      => $stats['luk'],
+        'money'    => $stats['money'],
+        'stage'    => 1,
+        'weapons'  => [],
+        'items'    => [],
+        'temp_atk' => 0,
+        'temp_def' => 0,
+        'battle'   => null,
+    ];
+}
+
+function player_score(array $p): int {
+    return $p['hp'] + $p['mp'] * 2 + $p['atk'] * 3
+         + $p['def'] * 3 + $p['agi'] * 2 + $p['luk']
+         + (int)($p['money'] / 20);
+}
+
+function player_rating(int $score): string {
+    if ($score >= 600) return 'S';
+    if ($score >= 450) return 'A';
+    if ($score >= 320) return 'B';
+    if ($score >= 200) return 'C';
+    return 'D';
+}
+
+function hp_pct(array $p): int {
+    return $p['max_hp'] > 0 ? (int)($p['hp'] / $p['max_hp'] * 100) : 0;
+}
+
+function eff_atk(array $p): int { return $p['atk'] + $p['temp_atk']; }
+function eff_def(array $p): int { return $p['def'] + $p['temp_def']; }

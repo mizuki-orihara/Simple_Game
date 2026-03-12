@@ -144,16 +144,16 @@ function showTitle() {
     clearLog();
     document.getElementById('status-bar').innerHTML = '';
     const lines = [
-        '╔══════════════════════════════════════╗',
-        '║                                      ║',
-        '║    S T R E E T   D O G S             ║',
-        '║                                      ║',
-        '║    路地裏サバイバル RPG               ║',
-        '║                                      ║',
-        '╚══════════════════════════════════════╝',
+        '╔═════════════════════════════════╗',
+        '║                                 ║',
+        '║    S T R E E T   D O G S        ║',
+        '║                                 ║',
+        '║    路地裏サバイバル RPG         ║',
+        '║                                 ║',
+        '╚═════════════════════════════════╝',
         '',
         '> システム起動完了。',
-        '> バージョン 0.2.0',
+        '> バージョン 0.2.4',
         '',
     ];
     lines.forEach((l, i) => print(l, i < 7 ? 'header' : 'info', i * 50));
@@ -369,11 +369,11 @@ async function startBoss() {
     if (!data) return;
     updateHUD(data.player);
     G.mob = data.mob;
-    print('> ───────────────────────────', 'dim');
+    print('> ──────────────────────', 'dim');
     print(`> BOSS ENCOUNTER`, 'bad');
     print(`> 【${data.mob.name}】`, 'bad');
     print(`> HP: ${data.mob.hp}  ATK: ${data.mob.atk}  DEF: ${data.mob.def}`, 'info');
-    print('> ───────────────────────────', 'dim');
+    print('> ──────────────────────', 'dim');
     printBlank();
     setTimeout(() => showFightCommands(), 600);
 }
@@ -549,12 +549,12 @@ function gameOver() {
     document.getElementById('crt-wrap').classList.add('flash');
     setTimeout(() => document.getElementById('crt-wrap').classList.remove('flash'), 300);
     const lines = [
-        '> ───────────────────────────',
+        '> ──────────────────────',
         '> DEAD',
         '> ',
         '> お前は路地裏に倒れた。',
         '> 名前も残らない。',
-        '> ───────────────────────────',
+        '> ──────────────────────',
     ];
     lines.forEach((l, i) => print(l, 'bad', i * 80));
     setTimeout(() => {

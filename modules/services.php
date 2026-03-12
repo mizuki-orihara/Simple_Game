@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  modules/services.php — 宿 / 修練所 / 武器屋 / 道具屋
+//  modules/services.php ? 宿 / 修練所 / 武器屋 / 道具屋
 // ============================================================
 
 require_once __DIR__ . '/../config.php';
@@ -18,13 +18,13 @@ function inn_quote(): int {
 function inn_stay(int $cost): array {
     $p = player_get();
     if ($p['money'] < $cost) {
-        return ['ok' => false, 'lines' => ["> 金が足りない。(¥{$cost} 必要)"]];
+        return ['ok' => false, 'lines' => ["> 金が足りない。(\{$cost} 必要)"]];
     }
     $p['money'] -= $cost;
     $p['hp'] = $p['max_hp'];
     $p['mp'] = $p['max_mp'];
     player_set($p);
-    return ['ok' => true, 'lines' => ["> ¥{$cost} を払って宿に泊まった。", "> HP・MP が全回復した。"], 'player' => $p];
+    return ['ok' => true, 'lines' => ["> \{$cost} を払って宿に泊まった。", "> HP・MP が全回復した。"], 'player' => $p];
 }
 
 // ============================================================
@@ -59,7 +59,7 @@ function dojo_train(string $stat): array {
         return ['ok' => false, 'lines' => ["> 無効なステータス。"]];
     }
     if ($p['money'] < $cost) {
-        return ['ok' => false, 'lines' => ["> 金が足りない。(¥{$cost} 必要)"]];
+        return ['ok' => false, 'lines' => ["> 金が足りない。(\{$cost} 必要)"]];
     }
 
     $p['money'] -= $cost;
@@ -71,10 +71,11 @@ function dojo_train(string $stat): array {
     if ($stat === 'hp') $p['max_hp'] += $gain;
     if ($stat === 'mp') $p['max_mp'] += $gain;
 
+    $p = advance_day($p);   // 修練で1日経過
     player_set($p);
     return [
         'ok'     => true,
-        'lines'  => ["> 修練。".strtoupper($stat)." +{$gain}（+{$pct}%）。¥{$cost} 消費。"],
+        'lines'  => ["> 修練。".strtoupper($stat)." +{$gain}（+{$pct}%）。\{$cost} 消費。"],
         'player' => $p,
     ];
 }
@@ -112,14 +113,15 @@ function weapon_buy(int $idx): array {
     $item = $stock[$idx];
     $p    = player_get();
     if ($p['money'] < $item['price']) {
-        return ['ok' => false, 'lines' => ["> 金が足りない。(¥{$item['price']} 必要)"]];
+        return ['ok' => false, 'lines' => ["> 金が足りない。(\{$item['price']} 必要)"]];
     }
     $p['money'] -= $item['price'];
     $p['weapons'][] = ['id' => $item['id'], 'name' => $item['name']];
+    $p = advance_day($p);   // 買い物で1日経過
     player_set($p);
     return [
         'ok'     => true,
-        'lines'  => ["> [{$item['name']}] を購入した。¥{$item['price']} 消費。", "> 武装数: ".count($p['weapons'])],
+        'lines'  => ["> [{$item['name']}] を購入した。\{$item['price']} 消費。", "> 武装数: ".count($p['weapons'])],
         'player' => $p,
     ];
 }
@@ -156,14 +158,15 @@ function item_buy(int $idx): array {
     $item = $stock[$idx];
     $p    = player_get();
     if ($p['money'] < $item['price']) {
-        return ['ok' => false, 'lines' => ["> 金が足りない。(¥{$item['price']} 必要)"]];
+        return ['ok' => false, 'lines' => ["> 金が足りない。(\{$item['price']} 必要)"]];
     }
     $p['money'] -= $item['price'];
     $p['items'][] = ['id' => $item['id'], 'name' => $item['name'], 'effect' => $item['effect'], 'value' => $item['value']];
+    $p = advance_day($p);   // 買い物で1日経過
     player_set($p);
     return [
         'ok'     => true,
-        'lines'  => ["> [{$item['name']}] を購入した。¥{$item['price']} 消費。"],
+        'lines'  => ["> [{$item['name']}] を購入した。\{$item['price']} 消費。"],
         'player' => $p,
     ];
 }

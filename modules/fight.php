@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  modules/fight.php — 戦闘エンジン
+//  modules/fight.php ? 戦闘エンジン
 // ============================================================
 
 require_once __DIR__ . '/../config.php';
@@ -90,6 +90,7 @@ function fight_action(string $action): array {
                 array_splice($p['items'], $smoke_idx, 1);
                 $lines[] = "> スモークボムを使って逃走した！";
                 $p['battle'] = null;
+                $p = advance_day($p);   // 戦闘終了（逃走）で1日経過
                 player_set($p);
                 return ['lines' => $lines, 'result' => 'escape', 'player' => $p];
             }
@@ -97,6 +98,7 @@ function fight_action(string $action): array {
             if (rng(1, 100) <= max(10, $chance)) {
                 $lines[] = "> 逃げ出した！";
                 $p['battle'] = null;
+                $p = advance_day($p);   // 戦闘終了（逃走）で1日経過
                 player_set($p);
                 return ['lines' => $lines, 'result' => 'escape', 'player' => $p];
             }
@@ -112,11 +114,16 @@ function fight_action(string $action): array {
     if ($mob['hp'] <= 0) {
         $result  = 'win';
         $reward  = rng(10, 80) + ($p['stage'] - 1) * 20;
+        // 金運の護符が有効なら報酬×2
+        if (!empty($p['gold_fever_days'])) {
+            $reward *= 2;
+            $lines[] = "> 【金運の護符】効果中！ (残{$p['gold_fever_days']}日)";
+        }
         $p['money']    += $reward;
         $p['temp_atk']  = 0;
         $p['temp_def']  = 0;
         $lines[] = "> [{$mob['name']}] を倒した！";
-        $lines[] = "> ¥{$reward} を手に入れた。";
+        $lines[] = "> \{$reward} を手に入れた。";
 
         if (!empty($mob['is_boss'])) {
             $result  = 'boss_win';
@@ -140,6 +147,7 @@ function fight_action(string $action): array {
         }
 
         $p['battle'] = null;
+        $p = advance_day($p);   // 戦闘終了（勝利）で1日経過
         player_set($p);
         return ['lines' => $lines, 'result' => $result, 'player' => $p];
     }
@@ -223,6 +231,10 @@ function _use_item(array $p, array $item): array {
         case 'temp_atk': $p['temp_atk'] += $item['value']; $lines[] = "> [{$item['name']}] 使用。ATK +{$item['value']}（一時的）。"; break;
         case 'temp_def': $p['temp_def'] += $item['value']; $lines[] = "> [{$item['name']}] 使用。DEF +{$item['value']}（一時的）。"; break;
         case 'escape':   $lines[] = "> [{$item['name']}] はここでは使えない（逃走コマンドで使用）。"; array_unshift($p['items'], $item); break;
+        case 'gold_fever':
+            $p['gold_fever_days'] = ($p['gold_fever_days'] ?? 0) + $item['value'];
+            $lines[] = "> [{$item['name']}] 使用。{$item['value']}日間 獲得金×2！";
+            break;
     }
     return [$p, $lines];
 }

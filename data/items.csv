@@ -6,3 +6,4 @@ mp_pot,MPポーション,mp,30,60,120,MP +30
 smoke,スモークボム,escape,0,80,150,戦闘から逃走
 boost,強化剤,temp_atk,10,120,220,次戦ATK +10
 tape,防護テープ,temp_def,10,100,180,次戦DEF +10
+gold_fever,金運の護符,gold_fever,5,200,400,5日間 獲得金×2

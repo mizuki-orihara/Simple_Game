@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  api/action.php — fetch API エンドポイント
+//  api/action.php - fetch API エンドポイント
 // ============================================================
 
 header('Content-Type: application/json; charset=utf-8');

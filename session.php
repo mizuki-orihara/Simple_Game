@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  session.php — セッション管理・プレイヤー状態
+//  session.php ? セッション管理・プレイヤー状態
 // ============================================================
 
 require_once __DIR__ . '/config.php';
@@ -32,12 +32,14 @@ function player_new(array $stats): array {
         'agi'      => $stats['agi'],
         'luk'      => $stats['luk'],
         'money'    => $stats['money'],
-        'stage'    => 1,
-        'weapons'  => [],
-        'items'    => [],
-        'temp_atk' => 0,
-        'temp_def' => 0,
-        'battle'   => null,
+        'stage'          => 1,
+        'weapons'        => [],
+        'items'          => [],
+        'temp_atk'       => 0,
+        'temp_def'       => 0,
+        'battle'         => null,
+        'day'            => 1,      // 経過日数
+        'gold_fever_days'=> 0,      // 金運の護符の残り日数
     ];
 }
 
@@ -61,3 +63,22 @@ function hp_pct(array $p): int {
 
 function eff_atk(array $p): int { return $p['atk'] + $p['temp_atk']; }
 function eff_def(array $p): int { return $p['def'] + $p['temp_def']; }
+
+/**
+ * 1日経過処理。護符の残り日数を減らし、切れたらitemsから削除してセーブ。
+ * 戦闘・修練・ショップ購入時に呼ぶ。
+ */
+function advance_day(array $p): array {
+    $p['day'] = ($p['day'] ?? 1) + 1;
+    if (!empty($p['gold_fever_days'])) {
+        $p['gold_fever_days'] = max(0, $p['gold_fever_days'] - 1);
+        // 期限切れになったらitemsから護符を全て除去
+        if ($p['gold_fever_days'] === 0) {
+            $p['items'] = array_values(array_filter(
+                $p['items'],
+                fn($it) => $it['effect'] !== 'gold_fever'
+            ));
+        }
+    }
+    return $p;
+}

@@ -7,7 +7,7 @@ const API = 'api/action.php';
 let G = {
     screen: 'title',
     player: null,
-    mob:    null,
+    mob: null,
     pendingStats: null,
     rerolls: 0,
     innCost: 0,
@@ -97,17 +97,25 @@ function updateHUD(p) {
     G.player = p;
     const hpPct = Math.round(p.hp / p.max_hp * 100);
     const hpCls = hpPct <= 25 ? 'danger' : hpPct <= 50 ? 'warn' : '';
+    const fevDays = p.gold_fever_days || 0;
+    const fevCls = fevDays > 0 ? 'active' : '';
     document.getElementById('status-bar').innerHTML = `
-      <span class="stat-item ${hpCls}">HP:<span>${p.hp}/${p.max_hp}</span></span>
-      <span class="stat-item">MP:<span>${p.mp}/${p.max_mp}</span></span>
-      <span class="stat-item">ATK:<span>${p.atk}</span></span>
-      <span class="stat-item">DEF:<span>${p.def}</span></span>
-      <span class="stat-item">AGI:<span>${p.agi}</span></span>
-      <span class="stat-item">LUK:<span>${p.luk}</span></span>
-      <span class="stat-item">STAGE:<span>${p.stage}</span></span>
-      <span class="stat-item">¥<span>${p.money.toLocaleString()}</span></span>
-      <span class="stat-item">武器:<span>${p.weapons.length}</span></span>
-      <span class="stat-item">道具:<span>${p.items.length}</span></span>
+      <div class="status-row">
+        <span class="stat-item ${hpCls}">HP:<span>${p.hp}/${p.max_hp}</span></span>
+        <span class="stat-item">MP:<span>${p.mp}/${p.max_mp}</span></span>
+        <span class="stat-item">¥<span>${p.money.toLocaleString()}</span></span>
+        <span class="stat-item">DAY:<span>${p.day || 1}</span></span>
+        <span class="stat-item ${fevCls}">護符:<span>${fevDays > 0 ? '残' + fevDays + '日' : 'OFF'}</span></span>
+      </div>
+      <div class="status-row">
+        <span class="stat-item">ATK:<span>${p.atk}</span></span>
+        <span class="stat-item">DEF:<span>${p.def}</span></span>
+        <span class="stat-item">AGI:<span>${p.agi}</span></span>
+        <span class="stat-item">LUK:<span>${p.luk}</span></span>
+        <span class="stat-item">STG:<span>${p.stage}</span></span>
+        <span class="stat-item">武器:<span>${p.weapons.length}</span></span>
+        <span class="stat-item">道具:<span>${p.items.length}</span></span>
+      </div>
     `;
 }
 
@@ -171,6 +179,7 @@ async function startChargen() {
 
 async function doRoll() {
     disableCommands();
+    clearLog();
     const data = await api('roll');
     if (!data) return;
     G.pendingStats = data.stats;
@@ -178,25 +187,25 @@ async function doRoll() {
 
     const s = data.stats;
     const entries = [
-        ['hp',    s.hp,    100, 250],
-        ['mp',    s.mp,    10,  120],
-        ['atk',   s.atk,   16,  32],
-        ['def',   s.def,   16,  32],
-        ['agi',   s.agi,   16,  32],
-        ['luk',   s.luk,   16,  32],
+        ['hp', s.hp, 100, 250],
+        ['mp', s.mp, 10, 120],
+        ['atk', s.atk, 16, 32],
+        ['def', s.def, 16, 32],
+        ['agi', s.agi, 16, 32],
+        ['luk', s.luk, 16, 32],
         ['money', s.money, 100, 2500],
     ];
 
     print(`> ──── ROLL #${G.rerolls} ────`, 'dim');
     entries.forEach(([key, val, min, max], i) => {
-        const filled   = Math.round((val - min) / (max - min) * 20);
-        const bar      = '█'.repeat(filled) + '░'.repeat(20 - filled);
-        const label    = key.toUpperCase().padEnd(6);
-        const dispVal  = key === 'money' ? ('¥' + val.toLocaleString()).padStart(8) : String(val).padStart(4);
+        const filled = Math.round((val - min) / (max - min) * 20);
+        const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+        const label = key.toUpperCase().padEnd(6);
+        const dispVal = key === 'money' ? ('¥' + val.toLocaleString()).padStart(8) : String(val).padStart(4);
         print(`> ${label} ${dispVal}  [${bar}]`, 'prompt', i * 40);
     });
 
-    const ratingColor = { S:'bad', A:'warn', B:'good', C:'prompt', D:'dim' };
+    const ratingColor = { S: 'bad', A: 'warn', B: 'good', C: 'prompt', D: 'dim' };
     print(`> `, 'blank', entries.length * 40 + 20);
     print(`> SCORE: ${data.score}  RATING: [ ${data.rating} ]`, ratingColor[data.rating] || 'prompt', entries.length * 40 + 60);
     print(`> ${data.comment}`, 'info', entries.length * 40 + 100);
@@ -205,7 +214,7 @@ async function doRoll() {
     setTimeout(() => {
         setCommands('このキャラで始めるか？', [
             { label: '[ CONFIRM ]', action: confirmChar, cls: 'amber' },
-            { label: '[ REROLL ]',  action: doRoll },
+            { label: '[ REROLL ]', action: doRoll },
         ]);
     }, entries.length * 40 + 300);
 }
@@ -250,12 +259,12 @@ async function showMap() {
 
     setTimeout(() => {
         setCommands('どこへ向かう？', [
-            { label: '[FIGHT]',  action: startFight },
-            { label: '[REST]',   action: startInn },
-            { label: '[TRAIN]',  action: startDojo },
+            { label: '[FIGHT]', action: startFight },
+            { label: '[REST]', action: startInn },
+            { label: '[TRAIN]', action: startDojo },
             { label: '[WEAPON]', action: startWeaponShop },
-            { label: '[ITEM]',   action: startItemShop },
-            { label: '[BOSS]',   action: startBoss, cls: 'danger' },
+            { label: '[ITEM]', action: startItemShop },
+            { label: '[BOSS]', action: startBoss, cls: 'danger' },
             { label: '[STATUS]', action: showStatus },
         ]);
     }, 60 + data.nodes.length * 40 + 400);
@@ -270,7 +279,7 @@ function showStatus() {
     print(`> ATK ${p.atk}  DEF ${p.def}  AGI ${p.agi}  LUK ${p.luk}`, 'prompt');
     print(`> ¥${p.money.toLocaleString()}  STAGE ${p.stage}`, 'prompt');
     if (p.weapons.length) print(`> 武器: ${p.weapons.map(w => w.name).join(', ')}`, 'info');
-    if (p.items.length)   print(`> 道具: ${p.items.map(i => i.name).join(', ')}`, 'info');
+    if (p.items.length) print(`> 道具: ${p.items.map(i => i.name).join(', ')}`, 'info');
     printBlank();
 }
 
@@ -292,18 +301,20 @@ async function startFight() {
 }
 
 function showFightCommands() {
-    const p        = G.player;
-    const hasThrow = p.weapons.some(w => ['knife','bullet'].includes(w.id));
-    const hasMp    = p.mp >= 10;
-    const hasItem  = p.items.length > 0;
+    const p = G.player;
+    const hasThrow = p.weapons.some(w => ['knife', 'bullet'].includes(w.id));
+    const hasMp = p.mp >= 10;
+    const hasItem = p.items.length > 0;
     setCommands(`vs 【${G.mob.name}】 HP:${G.mob.hp}/${G.mob.max_hp}`, [
-        { label: '[ATTACK]',                    action: () => doFightAction('attack') },
-        { label: '[THROW]',                     action: () => doFightAction('throw'),  disabled: !hasThrow },
-        { label: '[SKILL]',                     action: () => doFightAction('skill'),  disabled: !hasMp },
-        { label: '[DEFEND]',                    action: () => doFightAction('defend') },
-        { label: hasItem ? `[ITEM: ${p.items[0].name}]` : '[ITEM]',
-                                                action: () => doFightAction('item'),   disabled: !hasItem },
-        { label: '[RUN]',                       action: () => doFightAction('run') },
+        { label: '[ATTACK]', action: () => doFightAction('attack') },
+        { label: '[THROW]', action: () => doFightAction('throw'), disabled: !hasThrow },
+        { label: '[SKILL]', action: () => doFightAction('skill'), disabled: !hasMp },
+        { label: '[DEFEND]', action: () => doFightAction('defend') },
+        {
+            label: hasItem ? `[ITEM: ${p.items[0].name}]` : '[ITEM]',
+            action: () => doFightAction('item'), disabled: !hasItem
+        },
+        { label: '[RUN]', action: () => doFightAction('run') },
     ]);
 }
 
@@ -317,10 +328,10 @@ async function doFightAction(cmd) {
 
     data.lines.forEach((l, i) => {
         const cls = l.includes('ダメージ') ? 'warn'
-                  : l.includes('倒した')   ? 'good'
-                  : l.includes('力尽き')   ? 'bad'
-                  : l.includes('回避')     ? 'cyan'
-                  : 'prompt';
+            : l.includes('倒した') ? 'good'
+                : l.includes('力尽き') ? 'bad'
+                    : l.includes('回避') ? 'cyan'
+                        : 'prompt';
         print(l, cls, i * 60);
     });
 
@@ -332,7 +343,7 @@ async function doFightAction(cmd) {
                 print('> 勝利。マップに戻る。', 'good');
                 setTimeout(() => showMap(), 800);
                 break;
-            case 'lose':      gameOver(); break;
+            case 'lose': gameOver(); break;
             case 'escape':
                 printBlank();
                 print('> 逃走成功。', 'warn');
@@ -407,8 +418,8 @@ async function startDojo() {
     const data = await api('dojo_info');
     if (!data) return;
     updateHUD(data.player);
-    const p        = data.player;
-    const cost     = data.cost;
+    const p = data.player;
+    const cost = data.cost;
     const statList = data.stat_list; // [{key, label, note}, ...]
 
     print('> 修練所に入った。', 'info');
@@ -424,8 +435,8 @@ async function startDojo() {
 
     const canAfford = p.money >= cost;
     const btns = statList.map(s => ({
-        label:    `[${s.label}]`,
-        action:   () => doDojoTrain(s.key),
+        label: `[${s.label}]`,
+        action: () => doDojoTrain(s.key),
         disabled: !canAfford,
     }));
     btns.push({ label: '[戻る]', action: showMap });
@@ -458,9 +469,9 @@ async function startWeaponShop() {
     printBlank();
 
     data.stock.forEach((w, i) => {
-        const dmgStr   = w.dmg[1] > 0 ? `DMG:${w.dmg[0]}-${w.dmg[1]}` : '投擲専用';
+        const dmgStr = w.dmg[1] > 0 ? `DMG:${w.dmg[0]}-${w.dmg[1]}` : '投擲専用';
         const throwStr = w.throw_dmg ? ` 投:${w.throw_dmg[0]}-${w.throw_dmg[1]}` : '';
-        print(`> [${i+1}] ${w.name.padEnd(8)} ¥${String(w.price).padStart(5)}  ${dmgStr}${throwStr}`, 'prompt', i * 50);
+        print(`> [${i + 1}] ${w.name.padEnd(8)} ¥${String(w.price).padStart(5)}  ${dmgStr}${throwStr}`, 'prompt', i * 50);
         print(`>     ${w.desc}`, 'info', i * 50 + 20);
     });
 
@@ -468,12 +479,12 @@ async function startWeaponShop() {
     print(`> 現在の武装: ${data.player.weapons.length > 0 ? data.player.weapons.map(w => w.name).join(' / ') : 'なし'}`, 'dim');
     printBlank();
 
-    const p    = data.player;
+    const p = data.player;
     const btns = data.stock.map((w, i) => ({
-        label:    `[買う${i+1}: ¥${w.price}]`,
-        action:   () => doBuyWeapon(i),
+        label: `[買う${i + 1}: ¥${w.price}]`,
+        action: () => doBuyWeapon(i),
         disabled: p.money < w.price,
-        cls:      'amber',
+        cls: 'amber',
     }));
     btns.push({ label: '[戻る]', action: showMap });
     setTimeout(() => setCommands('どれを買う？', btns), data.stock.length * 50 + 300);
@@ -503,19 +514,19 @@ async function startItemShop() {
     printBlank();
 
     data.stock.forEach((it, i) => {
-        print(`> [${i+1}] ${it.name.padEnd(10)} ¥${String(it.price).padStart(5)}  ${it.desc}`, 'prompt', i * 50);
+        print(`> [${i + 1}] ${it.name.padEnd(10)} ¥${String(it.price).padStart(5)}  ${it.desc}`, 'prompt', i * 50);
     });
 
     printBlank();
     print(`> 所持道具: ${data.player.items.length > 0 ? data.player.items.map(i => i.name).join(' / ') : 'なし'}`, 'dim');
     printBlank();
 
-    const p    = data.player;
+    const p = data.player;
     const btns = data.stock.map((it, i) => ({
-        label:    `[買う${i+1}: ¥${it.price}]`,
-        action:   () => doBuyItem(i),
+        label: `[買う${i + 1}: ¥${it.price}]`,
+        action: () => doBuyItem(i),
         disabled: p.money < it.price,
-        cls:      'amber',
+        cls: 'amber',
     }));
     btns.push({ label: '[戻る]', action: showMap });
     setTimeout(() => setCommands('どれを買う？', btns), data.stock.length * 50 + 300);
